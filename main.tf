@@ -67,3 +67,6 @@ resource "aws_vpc" "main" {
         availability_zone       = data.aws_availability_zones.available.names[count.index]
 
     }
+
+
+
