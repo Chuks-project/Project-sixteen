@@ -126,6 +126,59 @@ Multiple Resource Blocks: Notice that we have declared multiple resource blocks 
 
 Now let us improve our code by refactoring it.
 
+## FIXING THE PROBLEMS BY CODE REFACTORING
 
+- Fixing Hard Coded Values: We will introduce variables, and remove hard coding.
 
+- Starting with the provider block, declare a variable named region, give it a default value, and update the provider section by referring to the declared variable.
 
+```
+variable "region" {
+        default = "eu-central-1"
+    }
+
+    provider "aws" {
+        region = var.region
+    }
+```
+
+- Do the same to cidr value in the vpc block, and all the other arguments.
+
+```
+ variable "region" {
+        default = "eu-central-1"
+    }
+
+    variable "vpc_cidr" {
+        default = "172.16.0.0/16"
+    }
+
+    variable "enable_dns_support" {
+        default = "true"
+    }
+
+    variable "enable_dns_hostnames" {
+        default ="true" 
+    }
+
+    variable "enable_classiclink" {
+        default = "false"
+    }
+
+    variable "enable_classiclink_dns_support" {
+        default = "false"
+    }
+
+    provider "aws" {
+    region = var.region
+    }
+
+    # Create VPC
+    resource "aws_vpc" "main" {
+    cidr_block                     = var.vpc_cidr
+    enable_dns_support             = var.enable_dns_support 
+    enable_dns_hostnames           = var.enable_dns_support
+    enable_classiclink             = var.enable_classiclink
+    enable_classiclink_dns_support = var.enable_classiclink
+    }
+---
