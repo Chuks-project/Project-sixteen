@@ -210,12 +210,61 @@ variable "region" {
     }
 ```
 
+
 ##### Let us quickly understand what happened above.
 
-- The count tells us that we need 2 subnets. Therefore, Terraform will invoke a loop to create 2 subnets.
-- The data resource will return a list object that contains a list of AZs. Internally, Terraform will receive the data like this
+  - The count tells us that we need 2 subnets. Therefore, Terraform will invoke a loop to create 2 subnets.
+  - The data resource will return a list object that contains a list of AZs. Internally, Terraform will receive the data like this
+
+
+`["eu-west-1a", "eu-west-1b"]`
+
+
+Each of them is an index, the first one is index 0, while the other is index 1. If the data returned had more than 2 records, then the index numbers would continue to increment.
+
+Therefore, each time Terraform goes into a loop to create a subnet, it must be created in the retrieved AZ from the list. Each loop will need the index number to determine what AZ the subnet will be created. That is why we have data.aws_availability_zones.available.names[count.index] as the value for availability_zone. When the first loop runs, the first index will be 0, therefore the AZ will be eu-central-1a. The pattern will repeat for the second loop.
+
+But there is still a problem. If we run Terraform with this configuration, it may succeed for the first time, but by the time it goes into the second loop, it will fail because we still have cidr_block hard coded. The same cidr_block cannot be created twice within the same VPC. So, we have a little more work to do.
+
+
+- In order to solve or avoid the problem of creating same cidr_block in the same VPC, we have to make cidr_block dynamic.
+- To do this, We will introduce a function cidrsubnet(). It accepts 3 parameters(Its parameters are cidrsubnet(prefix, newbits, netnum).
+- Let us use it first by updating the configuration, then we will explore its internals.
 
 ```
- ["eu-west-1a", "eu-west-1b"]
+    # Create public subnet1
+    resource "aws_subnet" "public" { 
+        count                   = 2
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = cidrsubnet(var.vpc_cidr, 4 , count.index)
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+        }
 ```
+
+- A closer look at cidrsubnet – this function works like an algorithm to dynamically create a subnet CIDR per AZ. Regardless of the number of subnets created, it takes care of the cidr value per subnet.
+
+## Removing hard coded count value.
+
+If we cannot hard code a value we want, then we will need a way to dynamically provide the value based on some input. Since the data resource returns all the AZs within a region, it makes sense to count the number of AZs returned and pass that number to the count argument.
+
+To do this, we can introuduce length() function, which basically determines the length of a given list, map, or string.
+
+Since data.aws_availability_zones.available.names returns a list like ["eu-central-1a", "eu-central-1b", "eu-central-1c"] we can pass it into a lenght function and get number of the AZs.
+
+length(["eu-central-1a", "eu-central-1b", "eu-central-1c"])
+
+= Now we can simply update the public subnet block to look like this:
+
+---
+# Create public subnet1
+    resource "aws_subnet" "public" { 
+        count                   = length(data.aws_availability_zones.available.names)
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = cidrsubnet(var.vpc_cidr, 4 , count.index)
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+}
+
+---
 
