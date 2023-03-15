@@ -36,3 +36,30 @@ Boolean, etc.
 
 Best practices
 Ensure that every resource is tagged using multiple key-value pairs. 
+
+
+## VPC | SUBNETS | SECURITY GROUPS
+
+- First of all, we will create a folder in our VSC called PBL
+- Create a file in the folder, name it main.tf
+
+### Provider and VPC resource section
+
+- Add AWS as a provider, and a resource to create a VPC in the main.tf file.
+- Provider block informs Terraform that we intend to build infrastructure within AWS.
+- Resource block will create a VPC.
+
+```
+provider "aws" {
+  region = "eu-central-1"
+}
+
+# Create VPC
+resource "aws_vpc" "main" {
+  cidr_block                     = "172.16.0.0/16"
+  enable_dns_support             = "true"
+  enable_dns_hostnames           = "true"
+  enable_classiclink             = "false"
+  enable_classiclink_dns_support = "false"
+}
+```
