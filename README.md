@@ -126,21 +126,24 @@ Multiple Resource Blocks: Notice that we have declared multiple resource blocks 
 
 Now let us improve our code by refactoring it.
 
+
+
 ## FIXING THE PROBLEMS BY CODE REFACTORING
 
-- Fixing Hard Coded Values: We will introduce variables, and remove hard coding.
+Fixing Hard Coded Values: We will introduce variables, and remove hard coding.
 
-- Starting with the provider block, declare a variable named region, give it a default value, and update the provider section by referring to the declared variable.
+Starting with the provider block, declare a variable named region, give it a default value, and update the provider section by referring to the declared variable.
 
 ```
-variable "region" {
+   variable "region" {
         default = "eu-central-1"
-    }
+       }
 
     provider "aws" {
         region = var.region
     }
 ```
+
 
 - Do the same to cidr value in the vpc block, and all the other arguments.
 
@@ -181,14 +184,14 @@ variable "region" {
     enable_classiclink             = var.enable_classiclink
     enable_classiclink_dns_support = var.enable_classiclink
     }
----
 
+```
 
 - Fixing multiple resource blocks: This is where things become a little tricky. It’s not complex, we are just going to introduce some interesting concepts. Loops & Data sources
 
 - Terraform has a functionality that allows us to pull data which exposes information to us. For example, every region has Availability Zones (AZ). Different regions have from 2 to 4 Availability Zones. With over 20 geographic regions and over 70 AZs served by AWS, it is impossible to keep up with the latest information by hard coding the names of AZs. Hence, we will explore the use of Terraform’s Data Sources to fetch information outside of Terraform. In this case, from AWS
 
-#### Let us fetch Availability zones from AWS, and replace the hard coded value in the subnet’s availability_zone section.
+Let us fetch Availability zones from AWS, and replace the hard coded value in the subnet’s availability_zone section.
 
 ```
         # Get list of availability zones
@@ -250,9 +253,9 @@ If we cannot hard code a value we want, then we will need a way to dynamically p
 
 To do this, we can introuduce length() function, which basically determines the length of a given list, map, or string.
 
-Since data.aws_availability_zones.available.names returns a list like ["eu-central-1a", "eu-central-1b", "eu-central-1c"] we can pass it into a lenght function and get number of the AZs.
+Since data.aws_availability_zones.available.names returns a list like "eu-central-1a", "eu-central-1b", "eu-central-1c"  we can pass it into a lenght function and get number of the AZs. 
 
-length(["eu-central-1a", "eu-central-1b", "eu-central-1c"])
+length "eu-central-1a", "eu-central-1b", "eu-central-1c"
 
 = Now we can simply update the public subnet block to look like this:
 
@@ -437,7 +440,9 @@ variable "enable_classiclink_dns_support" {
 }
 ```
 
-Variables.tf
+
+
+### Variables.tf
 
 ```
 variable "region" {
@@ -471,7 +476,9 @@ variable "enable_classiclink_dns_support" {
 
 
 
-terraform.tfvars
+
+
+### terraform.tfvars
 
 ```
 region = "eu-central-1"
