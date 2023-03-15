@@ -146,7 +146,7 @@ variable "region" {
 
 ```
  variable "region" {
-        default = "eu-central-1"
+        default = "eu-west-1"
     }
 
     variable "vpc_cidr" {
@@ -182,3 +182,40 @@ variable "region" {
     enable_classiclink_dns_support = var.enable_classiclink
     }
 ---
+
+
+- Fixing multiple resource blocks: This is where things become a little tricky. It’s not complex, we are just going to introduce some interesting concepts. Loops & Data sources
+
+- Terraform has a functionality that allows us to pull data which exposes information to us. For example, every region has Availability Zones (AZ). Different regions have from 2 to 4 Availability Zones. With over 20 geographic regions and over 70 AZs served by AWS, it is impossible to keep up with the latest information by hard coding the names of AZs. Hence, we will explore the use of Terraform’s Data Sources to fetch information outside of Terraform. In this case, from AWS
+
+#### Let us fetch Availability zones from AWS, and replace the hard coded value in the subnet’s availability_zone section.
+
+```
+        # Get list of availability zones
+        data "aws_availability_zones" "available" {
+        state = "available"
+        }
+```
+
+- To make use of this new data resource, we will need to introduce a count argument in the subnet block: such as:
+
+```
+ # Create public subnet1
+    resource "aws_subnet" "public" { 
+        count                   = 2
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = "172.16.1.0/24"
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+    }
+```
+
+##### Let us quickly understand what happened above.
+
+- The count tells us that we need 2 subnets. Therefore, Terraform will invoke a loop to create 2 subnets.
+- The data resource will return a list object that contains a list of AZs. Internally, Terraform will receive the data like this
+
+```
+ ["eu-west-1a", "eu-west-1b"]
+```
+
